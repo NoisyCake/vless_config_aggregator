@@ -80,6 +80,12 @@ Edit the `.env` file with your own values:
 |CONFIG_URL|Link to the `.txt` configuration file hosted on GitHub|https://api.github.com/.../file.txt|
 |GITHUB_TOKEN|GitHub token (required if the file is in a private repo)|ghp_dhoauigc7898374yduisdhSDHFHGf7|
 |SUB_NAME|Display name for the subscription in clients. If empty, the subscription ID will be used in most cases|HFK|
+|PROFILE_TITLE| Profile name in Happ. If not specified, SUB_NAME is used. You can use base64:... to safely transmit Unicode. | base64:WmVyZ29uR2F0ZSDwn46A |
+|SUPPORT_URL| Support link. | https://t.me/naixzergon |
+|PROFILE_WEB_PAGE_URL| Website link in Happ. | https://t.me/Komaru_GIF |
+|ANNOUNCE| Banner text. Can be plain text or base64:... | Hello, world! |
+|PROFILE_UPDATE_INTERVAL| Profile update interval in hours. | 24 |
+|PROVIDER_ID| Happ provider ID. | example |
 |SERVER_NAME|Your server’s domain name|domain.or.subdomain|
 |PORT|Port the service should run on|443|
 |URL|Path segment used in the final subscription URL|sub|

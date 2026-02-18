@@ -8,12 +8,11 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Response, HTTPException
 
 
-# Logging configuration with rotation every 3 days
 logger_file = logging.handlers.TimedRotatingFileHandler(
     filename="py.log",
     when="midnight",
     interval=3,
-    backupCount=5   # Keep up to 5 log files
+    backupCount=5
 )
 formatter = logging.Formatter(
     fmt='[{asctime}] #{levelname:8} {filename}:{lineno} - {message}',
@@ -26,20 +25,33 @@ logger.setLevel(logging.INFO)
 logger.addHandler(logger_file)
 
 
-# Initialize FastAPI app
 app = FastAPI()
 
-# Load environs
 load_dotenv()
 
 
+def _get_env(name: str) -> str | None:
+    value = os.getenv(name)
+    if value is None:
+        return None
+    value = value.strip()
+    return value or None
+
+
+def build_optional_headers() -> dict[str, str]:
+    profile_title = _get_env("PROFILE_TITLE") or _get_env("SUB_NAME")
+    headers = {
+        "profile-title": profile_title,
+        "support-url": _get_env("SUPPORT_URL"),
+        "profile-web-page-url": _get_env("PROFILE_WEB_PAGE_URL"),
+        "announce": _get_env("ANNOUNCE"),
+        "profile-update-interval": _get_env("PROFILE_UPDATE_INTERVAL"),
+        "providerid": _get_env("PROVIDER_ID"),
+    }
+    return {key: value for key, value in headers.items() if value}
+
+
 async def fetch_links() -> tuple[list[str], list[str]]:
-    '''
-    Fetches the configuration source file from GitHub or local .txt file.\n
-    Returns a tuple of two lists:
-        - HTTP subscription links
-        - Direct vless configuration links
-    '''
     try:
         if os.getenv('LOCAL_MODE') == 'on':
             with open('configs.txt', encoding='utf-8') as file:
@@ -48,7 +60,6 @@ async def fetch_links() -> tuple[list[str], list[str]]:
         else:
             github_token = os.getenv('GITHUB_TOKEN')
             headers = {}
-            # If token is provided, use it for private repo access
             if github_token:
                 headers = {
                     "Authorization": f"token {github_token}",
@@ -91,15 +102,6 @@ async def fetch_subscription(
     sub_link: str,
     sub_id: str
 ) -> bytes | None:
-    '''
-    Downloads and decodes a base64 subscription config
-    using the provided sub_id.\n
-    Args:
-        client: Shared HTTP client session.
-        sub_link: Base URL to the subscription service.
-        sub_id: Unique identifier for the subscription.
-    Returns decoded configuration as bytes, or None if failed.
-    '''
     try:
         sub = await client.get(f'{sub_link}{sub_id}', timeout=3)
         sub.raise_for_status()
@@ -109,15 +111,6 @@ async def fetch_subscription(
 
 
 async def merge_all(sub_links: list[str], vless_links: list[str], sub_id: str) -> bytes:
-    '''
-    Merges both 3x-ui subscriptions and direct VLESS links into
-    a single byte stream.\n
-    Args:
-        sub_links: List of HTTP-based subscription links.
-        vless_links: List of direct VLESS configuration strings.
-        sub_id: Subscription ID to append to each HTTP link.
-    Returns combined and encoded byte data of all valid configurations.
-    '''
     async with httpx.AsyncClient() as client:
         decoded_subs = [
             fetch_subscription(client, sub_url, sub_id) 
@@ -126,7 +119,6 @@ async def merge_all(sub_links: list[str], vless_links: list[str], sub_id: str) -
         tmp = await gather(*decoded_subs)
         data = [x for x in tmp if x is not None]
         
-        # If there is no configs at all
         if not data and not vless_links:
             logger.error("No subscriptions or configurations available")
             raise HTTPException(
@@ -149,12 +141,6 @@ path = os.getenv('URL')
 @app.get(f'/{path}/{{sub_id}}')
 @app.get(f'/{path}')
 async def main(sub_id: str = "") -> Response:
-    '''
-    API endpoint to encode combined configurations.\n
-    Args:
-        sub_id: Optional subscription ID (used for HTTP-based configs).
-    Returns a base64-encoded text/plain response containing all valid configurations.
-    '''
     sub_links, vless_links = await fetch_links()
     if not sub_links and not vless_links:
         logger.error("No subscriptions or configurations available")
@@ -163,4 +149,5 @@ async def main(sub_id: str = "") -> Response:
     result = await merge_all(sub_links, vless_links, sub_id)
     global_sub = base64.b64encode(result)
 
-    return Response(content=global_sub, media_type='text/plain')
+    headers = build_optional_headers()
+    return Response(content=global_sub, media_type='text/plain', headers=headers)

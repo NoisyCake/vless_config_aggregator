@@ -81,6 +81,12 @@ cp .env.template .env
 |CONFIG_URL|Ссылка на `.txt` файл конфигураций|https://api.github.com/.../file.txt|
 |GITHUB_TOKEN|Токен доступа GitHub (если файл находится в приватном репозитории)|ghp_dhoauigc7898374yduisdhSDHFHGf7|
 |SUB_NAME|Имя подписки, которое будет отображаться в клиенте. Если не указано, им станет subscription ID из 3x-ui|HFK|
+|PROFILE_TITLE| Название профиля в Happ. Если не указано, используется SUB_NAME. Можно писать base64:... чтобы безопасно передавать Unicode.|base64:WmVyZ29uR2F0ZSDwn46A|
+|SUPPORT_URL| Ссылка на поддержку.|https://t.me/naixzergon
+|PROFILE_WEB_PAGE_URL|Ссылка на сайт в Happ|https:t.me/Komaru_GIF|
+|ANNOUNCE|Текст баннера. Можно обычный текст или base64:....|Hello, world!|
+|PROFILE_UPDATE_INTERVAL|Интервал обновления профиля в часах|24|
+|PROVIDER_ID|ID провайдера Happ|example|
 |SERVER_NAME|Доменное имя сервера, на котором установлен сервис|domain.or.subdomain|
 |PORT|Порт, на котором будет работать сервис|443|
 |URL|Часть пути новой подписки|sub|
